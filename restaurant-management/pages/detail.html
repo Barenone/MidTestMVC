@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>餐廳詳情</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <span class="brand">🍽 餐廳管理系統</span>
+        <div class="nav-links">
+            <a href="list.html">餐廳列表</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="page-header">
+            <a href="list.html" class="back-link">← 返回列表</a>
+            <div id="detailActions"></div>
+        </div>
+
+        <div class="detail-grid">
+            <div class="card">
+                <h3 class="section-title">店家資訊</h3>
+                <div id="infoRows"></div>
+
+                <div class="coord-section">
+                    <h4 class="coord-title">
+                        經緯度 <span class="badge badge-warning">Admin only</span>
+                    </h4>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label>緯度</label>
+                            <input type="text" id="editLat" class="input" placeholder="尚未取得">
+                        </div>
+                        <div class="field">
+                            <label>經度</label>
+                            <input type="text" id="editLng" class="input" placeholder="尚未取得">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="saveCoordBtn" style="margin-top:8px">
+                        儲存座標
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title">評分統計</h3>
+                <div id="ratingDisplay"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/models/RestaurantModel.js"></script>
+    <script src="../js/views/RestaurantDetailView.js"></script>
+    <script src="../js/controllers/RestaurantDetailController.js"></script>
+</body>
+
+</html>

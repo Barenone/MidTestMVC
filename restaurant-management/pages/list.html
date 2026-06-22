@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>餐廳列表</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <span class="brand">🍽 餐廳管理系統</span>
+        <div class="nav-links">
+            <a href="list.html" class="active">餐廳列表</a>
+            <a href="form.html">新增餐廳</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="toolbar">
+            <input type="text" id="searchInput" placeholder="搜尋名稱或地址…" class="input">
+            <select id="categoryFilter" class="input">
+                <option value="">全部類別</option>
+                <option>台式料理</option>
+                <option>日式料理</option>
+                <option>韓式料理</option>
+                <option>火鍋</option>
+                <option>燒烤</option>
+                <option>咖啡廳</option>
+                <option>甜點</option>
+                <option>早午餐</option>
+                <option>素食</option>
+                <option>義式料理</option>
+            </select>
+            <select id="sortSelect" class="input">
+                <option value="createdAt">最新新增</option>
+                <option value="rating">星級最高</option>
+                <option value="reviewCount">評論最多</option>
+            </select>
+            <a href="form.html" class="btn btn-primary">＋ 新增餐廳</a>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>名稱</th>
+                    <th>類別</th>
+                    <th>地址</th>
+                    <th>電話</th>
+                    <th>星級</th>
+                    <th>評論數</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="restaurantTableBody"></tbody>
+        </table>
+        <p id="emptyMsg" class="empty-msg" style="display:none">找不到符合條件的餐廳</p>
+    </main>
+
+    <script src="../js/models/RestaurantModel.js"></script>
+    <script src="../js/views/RestaurantListView.js"></script>
+    <script src="../js/controllers/RestaurantListController.js"></script>
+</body>
+
+</html>
