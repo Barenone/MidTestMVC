@@ -1,77 +1,123 @@
-// =============================================
-// View — RestaurantFormView.js
-// 職責：表單頁的畫面渲染與欄位存取
-// =============================================
-
 const RestaurantFormView = (() => {
+    function renderModal({ restaurant, tags }) {
+        const isEdit = Boolean(restaurant?.id);
+        const data = restaurant || emptyRestaurant();
+        const activeTags = tags.filter(item => !item.isDeleted);
 
-    // 切換為「編輯模式」標題
-    function setEditMode() {
-        document.getElementById('formTitle').textContent = '編輯餐廳';
-        document.getElementById('submitBtn').textContent = '更新餐廳';
+        return `
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                <div class="modal-head">
+                    <h2 id="modalTitle">${isEdit ? "編輯餐廳" : "新增餐廳"}</h2>
+                    <button class="btn btn-icon" data-action="close-modal" aria-label="關閉">×</button>
+                </div>
+                <form id="restaurantForm">
+                    <input type="hidden" name="id" value="${data.id || ""}">
+                    <div class="modal-body">
+                        <section class="form-section">
+                            <h3>基本資料</h3>
+                            <div class="form-grid">
+                                ${field("餐廳名稱", "name", data.name, true)}
+                                ${field("電話", "phone", data.phone)}
+                                ${selectField("縣市", "city", data.city, ["台北市"], true)}
+                                ${selectField("行政區", "district", data.district, ["大安區", "信義區", "士林區", "中山區", "中正區"], true)}
+                            </div>
+                            ${field("詳細地址", "address", data.address, true)}
+                            <p class="hint">實作後可串接地圖 API，由地址自動轉換 Latitude / Longitude。</p>
+                        </section>
+
+                        <section class="form-section">
+                            <h3>標籤</h3>
+                            <div class="choice-grid" id="tagChoices">
+                                ${activeTags.map(tag => `
+                                    <button type="button" class="choice ${data.tags.includes(tag.name) ? "active" : ""}" data-tag="${tag.name}">${tag.name}</button>
+                                `).join("")}
+                            </div>
+                        </section>
+
+                        <section class="form-section">
+                            <h3>營業時間</h3>
+                            <button type="button" class="btn" data-action="copy-first-day">□ 套用週一至全週</button>
+                            <div class="hours-form" id="hoursForm">
+                                ${data.hours.map((day, index) => hourRow(day, index)).join("")}
+                            </div>
+                        </section>
+
+                        <section class="form-section">
+                            <h3>圖片</h3>
+                            <p class="hint">封面可對應 RestaurantCover，環境照可對應 RestaurantEnvironment。</p>
+                            <div class="image-placeholders">
+                                <div class="image-box">封面</div>
+                                <div class="image-box">新增</div>
+                                <div class="image-box">環境照</div>
+                                <div class="image-box">新增</div>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="modal-foot">
+                        <button type="button" class="btn" data-action="close-modal">取消</button>
+                        <button type="submit" class="btn btn-primary">□ ${isEdit ? "儲存變更" : "新增餐廳"}</button>
+                    </div>
+                </form>
+            </div>
+        `;
     }
 
-    // 將資料填入表單欄位（編輯時使用）
-    function fillForm(data) {
-        document.getElementById('name').value = data.name || '';
-        document.getElementById('phone').value = data.phone || '';
-        document.getElementById('address').value = data.address || '';
-        document.getElementById('businessHours').value = data.businessHours || '';
-        document.getElementById('latitude').value = data.latitude ?? '';
-        document.getElementById('longitude').value = data.longitude ?? '';
-
-        data.categories.forEach(cat => {
-            const btn = document.querySelector(`.cat-btn[data-cat="${cat}"]`);
-            if (btn) btn.classList.add('active');
-        });
-    }
-
-    // 從表單收集資料（交給 Controller）
-    function getFormData() {
+    function emptyRestaurant() {
         return {
-            name: document.getElementById('name').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            address: document.getElementById('address').value.trim(),
-            businessHours: document.getElementById('businessHours').value.trim(),
-            latitude: document.getElementById('latitude').value.trim() || null,
-            longitude: document.getElementById('longitude').value.trim() || null,
-            categories: [...document.querySelectorAll('.cat-btn.active')]
-                .map(btn => btn.dataset.cat),
+            name: "",
+            phone: "",
+            city: "台北市",
+            district: "",
+            address: "",
+            tags: [],
+            hours: JSON.parse(JSON.stringify(RestaurantModel.defaultHours))
         };
     }
 
-    // 顯示驗證錯誤
-    function showErrors(errors) {
-        ['name', 'phone', 'address', 'latitude', 'longitude', 'categories']
-            .forEach(field => {
-                const el = document.getElementById(`err-${field}`);
-                if (el) el.textContent = errors[field] || '';
-            });
+    function field(label, name, value = "", required = false) {
+        return `
+            <label class="field">
+                <span>${label}${required ? ` <b class="required">*</b>` : ""}</span>
+                <input class="input" name="${name}" value="${value ?? ""}" ${required ? "required" : ""}>
+            </label>
+        `;
     }
 
-    // 清除所有錯誤訊息
-    function clearErrors() {
-        showErrors({});
+    function selectField(label, name, value, options, required = false) {
+        return `
+            <label class="field">
+                <span>${label}${required ? ` <b class="required">*</b>` : ""}</span>
+                <select class="select" name="${name}" ${required ? "required" : ""}>
+                    <option value="">請選擇</option>
+                    ${options.map(option => `<option ${option === value ? "selected" : ""}>${option}</option>`).join("")}
+                </select>
+            </label>
+        `;
     }
 
-    // 綁定類別切換
-    function bindCategoryToggle() {
-        document.querySelectorAll('.cat-btn').forEach(btn => {
-            btn.addEventListener('click', () => btn.classList.toggle('active'));
-        });
+    function hourRow(day, index) {
+        return `
+            <div class="hour-form-row" data-day-index="${index}">
+                <strong>週${day.day}</strong>
+                <label class="switch"><input type="checkbox" data-action="toggle-day" ${day.open ? "checked" : ""}>營業</label>
+                <div class="slot-list">
+                    ${day.open ? day.slots.map((slot, slotIndex) => slotRow(slot, slotIndex)).join("") : `<span class="muted">公休</span>`}
+                    ${day.open ? `<button type="button" class="btn" data-action="add-slot">□ 新增時段</button>` : ""}
+                </div>
+            </div>
+        `;
     }
 
-    // 綁定表單送出（傳入 callback）
-    function bindSubmit(onSubmit) {
-        document.getElementById('restaurantForm')
-            .addEventListener('submit', (e) => {
-                e.preventDefault();
-                onSubmit();
-            });
+    function slotRow(slot, slotIndex) {
+        return `
+            <div class="slot-row" data-slot-index="${slotIndex}">
+                <input class="input" type="time" data-field="start" value="${slot.start}">
+                <span>至</span>
+                <input class="input" type="time" data-field="end" value="${slot.end}">
+                <button type="button" class="btn btn-icon" data-action="remove-slot">×</button>
+            </div>
+        `;
     }
 
-    return {
-        setEditMode, fillForm, getFormData, showErrors, clearErrors,
-        bindCategoryToggle, bindSubmit
-    };
+    return { renderModal, emptyRestaurant, hourRow };
 })();

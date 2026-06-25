@@ -1,59 +1,38 @@
-// =============================================
-// Controller — RestaurantDetailController.js
-// 職責：協調詳情頁的 Model ↔ View
-// =============================================
-
 const RestaurantDetailController = (() => {
-
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-
-    // 儲存座標
-    function _handleSaveCoord() {
-        const coords = RestaurantDetailView.getCoords();
-        const lat = coords.latitude ? parseFloat(coords.latitude) : null;
-        const lng = coords.longitude ? parseFloat(coords.longitude) : null;
-
-        // 簡單驗證
-        if (lat !== null && (isNaN(lat) || lat < -90 || lat > 90)) {
-            alert('緯度格式不正確（需介於 -90 ~ 90）');
-            return;
-        }
-        if (lng !== null && (isNaN(lng) || lng < -180 || lng > 180)) {
-            alert('經度格式不正確（需介於 -180 ~ 180）');
-            return;
-        }
-
-        RestaurantModel.update(id, { latitude: lat, longitude: lng });
-        alert('座標已儲存！');
+    function show(id, { deleted = false } = {}) {
+        const restaurant = RestaurantModel.getRestaurant(id);
+        RestaurantApp.setTitle(deleted ? "停用餐廳詳細" : "餐廳詳細");
+        RestaurantApp.setActions("");
+        RestaurantApp.mount(RestaurantDetailView.render(restaurant, { deleted }));
     }
 
-    // 軟刪除
-    function _handleSoftDelete() {
-        if (!confirm('確定要軟刪除此餐廳嗎？（可於後台還原）')) return;
-        RestaurantModel.softDelete(id, 1); // adminID 暫時固定為 1
-        alert('已刪除！');
-        window.location.href = 'list.html';
-    }
-
-    // 初始化
-    function init() {
-        const data = id ? RestaurantModel.getByID(id) : null;
-
-        if (!data || data.isDeleted) {
-            RestaurantDetailView.renderNotFound();
-            return;
+    function handleAction(action, id) {
+        if (action === "back-list") RestaurantApp.showList();
+        if (action === "back-deleted") RestaurantApp.showDeleted();
+        if (action === "edit") {
+            RestaurantFormController.open({
+                restaurant: RestaurantModel.getRestaurant(id),
+                onSave: saved => show(saved.id)
+            });
         }
-
-        RestaurantDetailView.renderActions(data.id);
-        RestaurantDetailView.renderInfoRows(data);
-        RestaurantDetailView.fillCoords(data.latitude, data.longitude);
-        RestaurantDetailView.renderRating(data);
-        RestaurantDetailView.bindSaveCoord(_handleSaveCoord);
-        RestaurantDetailView.bindSoftDelete(_handleSoftDelete);
+        if (action === "soft-delete") {
+            const reason = prompt("請輸入停用原因", "違規內容") || "違規內容";
+            RestaurantModel.softDeleteRestaurant(id, reason);
+            RestaurantApp.toast("餐廳已移至停用餐廳一覽。");
+            RestaurantApp.showDeleted();
+        }
+        if (action === "restore") {
+            RestaurantModel.restoreRestaurant(id);
+            RestaurantApp.toast("已解除停用。");
+            RestaurantApp.showList();
+        }
+        if (action === "hard-delete") {
+            if (!confirm("永久刪除後將無法在此原型中還原，確定刪除？")) return;
+            RestaurantModel.hardDeleteRestaurant(id);
+            RestaurantApp.toast("已永久刪除。");
+            RestaurantApp.showDeleted();
+        }
     }
 
-    return { init };
+    return { show, handleAction };
 })();
-
-RestaurantDetailController.init();

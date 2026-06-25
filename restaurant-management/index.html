@@ -1,14 +1,64 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>餐廳管理系統</title>
-    <meta http-equiv="refresh" content="0;url=pages/list.html">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
-    <p>跳轉中… <a href="pages/list.html">點此前往</a></p>
-</body>
+    <div class="app-shell">
+        <aside class="sidebar" aria-label="後台導覽">
+            <div class="brand">
+                <span class="brand-icon">□</span>
+                <div>
+                    <strong>餐廳管理系統</strong>
+                    <span>後台管理</span>
+                </div>
+            </div>
 
+            <nav>
+                <p class="nav-title">餐廳管理</p>
+                <button class="nav-item active" data-route="list"><span>□</span>餐廳一覽</button>
+                <button class="nav-item" data-route="tags"><span>□</span>餐廳標籤一覽</button>
+                <button class="nav-item" data-route="deleted"><span>□</span>停用餐廳一覽 <b id="deletedCount">0</b></button>
+
+                <p class="nav-title">其他系統</p>
+                <button class="nav-item disabled" disabled><span>□</span>會員管理</button>
+                <button class="nav-item disabled" disabled><span>□</span>評論管理</button>
+                <button class="nav-item disabled" disabled><span>□</span>檢舉管理</button>
+            </nav>
+
+            <div class="admin-box">
+                <span>管</span>
+                <div>
+                    <strong>admin</strong>
+                    <small>系統管理員</small>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <h1 id="pageTitle"><span>□</span>餐廳一覽</h1>
+                <div id="pageActions" class="page-actions"></div>
+            </header>
+            <section id="app" class="content" aria-live="polite"></section>
+        </main>
+    </div>
+
+    <div id="modalRoot" class="modal-root" aria-hidden="true"></div>
+    <div id="toast" class="toast" role="status"></div>
+
+    <script src="js/models/RestaurantModel.js"></script>
+    <script src="js/views/RestaurantListView.js"></script>
+    <script src="js/views/RestaurantDetailView.js"></script>
+    <script src="js/views/RestaurantFormView.js"></script>
+    <script src="js/controllers/RestaurantListController.js"></script>
+    <script src="js/controllers/RestaurantDetailController.js"></script>
+    <script src="js/controllers/RestaurantFormController.js"></script>
+    <script>
+        RestaurantApp.init();
+    </script>
+</body>
 </html>

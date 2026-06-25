@@ -1,91 +1,124 @@
-// =============================================
-// Controller — RestaurantFormController.js
-// 職責：協調表單頁的 Model ↔ View
-// =============================================
-
 const RestaurantFormController = (() => {
+    let hoursDraft = [];
+    let onSaveCallback = null;
 
-    const params = new URLSearchParams(window.location.search);
-    const editID = params.get('id');
-    const isEdit = !!editID;
-
-    // 驗證規則（商業邏輯放在 Controller）
-    function _validate(data) {
-        const errors = {};
-
-        if (!data.name) {
-            errors.name = '餐廳名稱為必填';
-        }
-        if (!data.address) {
-            errors.address = '地址為必填';
-        }
-        if (data.phone && !/^[\d\-\(\)\s]+$/.test(data.phone)) {
-            errors.phone = '電話格式不正確';
-        }
-        if (data.latitude !== null) {
-            const lat = parseFloat(data.latitude);
-            if (isNaN(lat) || lat < -90 || lat > 90) {
-                errors.latitude = '緯度需介於 -90 ~ 90';
-            }
-        }
-        if (data.longitude !== null) {
-            const lng = parseFloat(data.longitude);
-            if (isNaN(lng) || lng < -180 || lng > 180) {
-                errors.longitude = '經度需介於 -180 ~ 180';
-            }
-        }
-        if (!data.categories || data.categories.length === 0) {
-            errors.categories = '至少選擇一個類別';
-        }
-
-        return { isValid: Object.keys(errors).length === 0, errors };
+    function open({ restaurant = null, onSave }) {
+        onSaveCallback = onSave;
+        const root = document.getElementById("modalRoot");
+        const data = restaurant ? JSON.parse(JSON.stringify(restaurant)) : RestaurantFormView.emptyRestaurant();
+        hoursDraft = JSON.parse(JSON.stringify(data.hours));
+        root.innerHTML = RestaurantFormView.renderModal({ restaurant: data, tags: RestaurantModel.tags() });
+        root.classList.add("open");
+        root.setAttribute("aria-hidden", "false");
     }
 
-    // 表單送出處理
-    function _handleSubmit() {
-        RestaurantFormView.clearErrors();
-        const formData = RestaurantFormView.getFormData();
-        const { isValid, errors } = _validate(formData);
+    function close() {
+        const root = document.getElementById("modalRoot");
+        root.classList.remove("open");
+        root.setAttribute("aria-hidden", "true");
+        root.innerHTML = "";
+    }
 
-        if (!isValid) {
-            RestaurantFormView.showErrors(errors);
+    function bindGlobalEvents() {
+        const root = document.getElementById("modalRoot");
+        root.addEventListener("click", event => {
+            const action = event.target.closest("[data-action]")?.dataset.action;
+            if (!action) return;
+
+            if (action === "close-modal") close();
+            if (action === "copy-first-day") copyFirstDay();
+            if (action === "toggle-day") toggleDay(event.target);
+            if (action === "add-slot") addSlot(event.target);
+            if (action === "remove-slot") removeSlot(event.target);
+        });
+
+        root.addEventListener("click", event => {
+            const choice = event.target.closest("[data-tag]");
+            if (choice) choice.classList.toggle("active");
+        });
+
+        root.addEventListener("input", event => {
+            const slotInput = event.target.closest("[data-field]");
+            if (!slotInput) return;
+            const row = slotInput.closest("[data-day-index]");
+            const slot = slotInput.closest("[data-slot-index]");
+            hoursDraft[Number(row.dataset.dayIndex)].slots[Number(slot.dataset.slotIndex)][slotInput.dataset.field] = slotInput.value;
+        });
+
+        root.addEventListener("submit", event => {
+            event.preventDefault();
+            save(event.target);
+        });
+    }
+
+    function copyFirstDay() {
+        if (!hoursDraft[0]) return;
+        const monday = JSON.parse(JSON.stringify(hoursDraft[0]));
+        hoursDraft = hoursDraft.map(day => ({ ...day, open: monday.open, slots: JSON.parse(JSON.stringify(monday.slots)) }));
+        renderHours();
+    }
+
+    function toggleDay(input) {
+        const row = input.closest("[data-day-index]");
+        const index = Number(row.dataset.dayIndex);
+        hoursDraft[index].open = input.checked;
+        if (input.checked && !hoursDraft[index].slots.length) {
+            hoursDraft[index].slots = [{ start: "11:00", end: "21:00" }];
+        }
+        renderHours();
+    }
+
+    function addSlot(button) {
+        const row = button.closest("[data-day-index]");
+        const index = Number(row.dataset.dayIndex);
+        hoursDraft[index].slots.push({ start: "17:00", end: "21:00" });
+        renderHours();
+    }
+
+    function removeSlot(button) {
+        const row = button.closest("[data-day-index]");
+        const slot = button.closest("[data-slot-index]");
+        const dayIndex = Number(row.dataset.dayIndex);
+        const slotIndex = Number(slot.dataset.slotIndex);
+        if (hoursDraft[dayIndex].slots.length > 1) {
+            hoursDraft[dayIndex].slots.splice(slotIndex, 1);
+            renderHours();
+        }
+    }
+
+    function renderHours() {
+        const container = document.getElementById("hoursForm");
+        if (!container) return;
+        container.innerHTML = hoursDraft.map((day, index) => RestaurantFormView.hourRow(day, index)).join("");
+    }
+
+    function save(form) {
+        const formData = new FormData(form);
+        const selectedTags = [...document.querySelectorAll("#tagChoices .choice.active")].map(item => item.dataset.tag);
+        if (!selectedTags.length) {
+            RestaurantApp.toast("請至少選擇一個標籤。");
             return;
         }
 
-        const payload = {
-            ...formData,
-            latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-            longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-            memberID: 1,
-            memberName: 'admin',
+        const id = formData.get("id");
+        const old = id ? RestaurantModel.getRestaurant(id) : {};
+        const record = {
+            ...old,
+            id: id ? Number(id) : undefined,
+            name: formData.get("name").trim(),
+            phone: formData.get("phone").trim(),
+            city: formData.get("city"),
+            district: formData.get("district"),
+            address: formData.get("address").trim(),
+            tags: selectedTags,
+            hours: hoursDraft
         };
 
-        if (isEdit) {
-            RestaurantModel.update(editID, payload);
-            alert('餐廳已更新！');
-        } else {
-            RestaurantModel.create(payload);
-            alert('餐廳已新增！');
-        }
-
-        window.location.href = 'list.html';
+        const saved = RestaurantModel.saveRestaurant(record);
+        close();
+        RestaurantApp.toast(id ? "餐廳資料已更新。" : "已新增餐廳。");
+        if (onSaveCallback) onSaveCallback(saved);
     }
 
-    // 初始化
-    function init() {
-        RestaurantFormView.bindCategoryToggle();
-        RestaurantFormView.bindSubmit(_handleSubmit);
-
-        if (isEdit) {
-            const data = RestaurantModel.getByID(editID);
-            if (data) {
-                RestaurantFormView.setEditMode();
-                RestaurantFormView.fillForm(data);
-            }
-        }
-    }
-
-    return { init };
+    return { open, close, bindGlobalEvents };
 })();
-
-RestaurantFormController.init();

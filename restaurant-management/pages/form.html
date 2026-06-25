@@ -1,103 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新增／編輯餐廳</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <meta http-equiv="refresh" content="0;url=../index.html">
+    <title>餐廳表單</title>
 </head>
-
 <body>
-    <nav class="navbar">
-        <span class="brand">🍽 餐廳管理系統</span>
-        <div class="nav-links">
-            <a href="list.html">餐廳列表</a>
-            <a href="form.html" class="active">新增餐廳</a>
-        </div>
-    </nav>
-
-    <main class="container">
-        <div class="page-header">
-            <a href="list.html" class="back-link">← 返回列表</a>
-            <h2 id="formTitle">新增餐廳</h2>
-        </div>
-
-        <form id="restaurantForm" class="card">
-
-            <div class="form-section">
-                <h3 class="section-title">基本資訊</h3>
-                <div class="form-grid">
-                    <div class="field">
-                        <label>餐廳名稱 <span class="required">*</span></label>
-                        <input type="text" id="name" class="input" placeholder="請輸入餐廳名稱">
-                        <span class="error-msg" id="err-name"></span>
-                    </div>
-                    <div class="field">
-                        <label>電話</label>
-                        <input type="text" id="phone" class="input" placeholder="ex. 02-2345-6789">
-                        <span class="error-msg" id="err-phone"></span>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>地址 <span class="required">*</span></label>
-                    <input type="text" id="address" class="input" placeholder="請輸入完整地址">
-                    <span class="error-msg" id="err-address"></span>
-                </div>
-                <div class="field">
-                    <label>營業時間</label>
-                    <input type="text" id="businessHours" class="input" placeholder="ex. 週一～週五 11:00-21:00">
-                </div>
-            </div>
-
-            <div class="form-section">
-                <h3 class="section-title">
-                    經緯度
-                    <span class="badge badge-warning">Admin only — 由地圖 API 自動帶入</span>
-                </h3>
-                <div class="form-grid">
-                    <div class="field">
-                        <label>緯度 Latitude</label>
-                        <input type="text" id="latitude" class="input" placeholder="留空由 API 帶入">
-                        <span class="error-msg" id="err-latitude"></span>
-                    </div>
-                    <div class="field">
-                        <label>經度 Longitude</label>
-                        <input type="text" id="longitude" class="input" placeholder="留空由 API 帶入">
-                        <span class="error-msg" id="err-longitude"></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <h3 class="section-title">類別標籤 <span class="required">*</span></h3>
-                <span class="error-msg" id="err-categories"></span>
-                <div class="cat-grid">
-                    <button type="button" class="cat-btn" data-cat="台式料理">台式料理</button>
-                    <button type="button" class="cat-btn" data-cat="日式料理">日式料理</button>
-                    <button type="button" class="cat-btn" data-cat="韓式料理">韓式料理</button>
-                    <button type="button" class="cat-btn" data-cat="火鍋">火鍋</button>
-                    <button type="button" class="cat-btn" data-cat="燒烤">燒烤</button>
-                    <button type="button" class="cat-btn" data-cat="咖啡廳">咖啡廳</button>
-                    <button type="button" class="cat-btn" data-cat="甜點">甜點</button>
-                    <button type="button" class="cat-btn" data-cat="早午餐">早午餐</button>
-                    <button type="button" class="cat-btn" data-cat="素食">素食</button>
-                    <button type="button" class="cat-btn" data-cat="義式料理">義式料理</button>
-                    <button type="button" class="cat-btn" data-cat="越南料理">越南料理</button>
-                    <button type="button" class="cat-btn" data-cat="泰式料理">泰式料理</button>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <a href="list.html" class="btn btn-secondary">取消</a>
-                <button type="submit" class="btn btn-primary" id="submitBtn">儲存餐廳</button>
-            </div>
-        </form>
-    </main>
-
-    <script src="../js/models/RestaurantModel.js"></script>
-    <script src="../js/views/RestaurantFormView.js"></script>
-    <script src="../js/controllers/RestaurantFormController.js"></script>
+    <a href="../index.html">前往餐廳管理系統</a>
 </body>
-
 </html>

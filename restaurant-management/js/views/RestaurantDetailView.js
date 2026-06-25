@@ -1,84 +1,90 @@
-javascript// =============================================
-// View — RestaurantDetailView.js
-// 職責：詳情頁的畫面渲染
-// =============================================
-
 const RestaurantDetailView = (() => {
+    function render(restaurant, { deleted = false } = {}) {
+        if (!restaurant) {
+            return `<div class="card">找不到餐廳資料。</div>`;
+        }
 
-    // 找不到資料時顯示錯誤
-    function renderNotFound() {
-        document.querySelector('.container').innerHTML =
-            '<p class="empty-msg">找不到此餐廳，<a href="list.html">返回列表</a></p>';
+        return `
+            <div class="detail-header">
+                <div class="detail-title">
+                    <button class="btn" data-action="${deleted ? "back-deleted" : "back-list"}">□ 返回</button>
+                    <h2>${restaurant.name}</h2>
+                    ${deleted ? `<span class="tag closed">停用中</span>` : ""}
+                </div>
+                <div class="page-actions">
+                    ${deleted ? `
+                        <button class="btn btn-restore" data-action="restore" data-id="${restaurant.id}">□ 解除停用</button>
+                        <button class="btn btn-danger" data-action="hard-delete" data-id="${restaurant.id}">□ 永久刪除</button>
+                    ` : `
+                        <button class="btn" data-action="edit" data-id="${restaurant.id}">□ 編輯</button>
+                        <button class="btn btn-danger" data-action="soft-delete" data-id="${restaurant.id}">□ 停用</button>
+                    `}
+                </div>
+            </div>
+
+            ${deleted ? `<div class="alert">此資料目前 IsDeleted = 1。解除停用後會回到餐廳一覽；永久刪除會從原型資料中移除。</div>` : ""}
+
+            <div class="detail-grid">
+                <div>
+                    <section class="card">
+                        <h3>基本資訊</h3>
+                        ${infoRow("餐廳名稱", restaurant.name)}
+                        ${infoRow("縣市", restaurant.city)}
+                        ${infoRow("行政區", restaurant.district)}
+                        ${infoRow("詳細地址", restaurant.address)}
+                        ${infoRow("電話", restaurant.phone)}
+                        ${infoRow("標籤", restaurant.tags.map(name => RestaurantListView.tag(name)).join(" "))}
+                        ${infoRow("擁有者", `${restaurant.owner}（MemberID: ${restaurant.memberId}）`)}
+                    </section>
+
+                    <section class="card">
+                        <h3>營業時間</h3>
+                        <div class="hours-grid">
+                            ${restaurant.hours.map(day => `
+                                <div class="hour-day">
+                                    <b>週${day.day}</b>
+                                    ${day.open ? day.slots.map(slot => `<div>${slot.start}<br>${slot.end}</div>`).join("") : `<span class="muted">公休</span>`}
+                                </div>
+                            `).join("")}
+                        </div>
+                    </section>
+                </div>
+
+                <div>
+                    <section class="card">
+                        <h3>評分摘要</h3>
+                        <strong style="font-size:42px">${restaurant.rating.toFixed(1)}</strong>
+                        <p><span class="stars">★★★★★</span></p>
+                        <p class="muted">共 ${restaurant.reviewCount} 則評論</p>
+                    </section>
+
+                    <section class="card">
+                        <h3>座標</h3>
+                        ${infoRow("Latitude", restaurant.latitude ?? "尚未填寫")}
+                        ${infoRow("Longitude", restaurant.longitude ?? "尚未填寫")}
+                    </section>
+
+                    ${deleted ? `
+                        <section class="card">
+                            <h3>停用資訊</h3>
+                            ${infoRow("停用時間", restaurant.deletedAt)}
+                            ${infoRow("執行者", restaurant.deletedBy)}
+                            ${infoRow("停用原因", RestaurantListView.tag(restaurant.deleteReason, "violation"))}
+                        </section>
+                    ` : ""}
+                </div>
+            </div>
+        `;
     }
 
-    // 渲染操作按鈕列
-    function renderActions(id) {
-        document.getElementById('detailActions').innerHTML = `
-      <a href="form.html?id=${id}" class="btn btn-primary">編輯</a>
-      <button class="btn btn-danger" data-action="soft-delete">軟刪除</button>
-    `;
+    function infoRow(key, value) {
+        return `
+            <div class="info-row">
+                <span class="info-key">${key}</span>
+                <span>${value}</span>
+            </div>
+        `;
     }
 
-    // 渲染基本資訊列
-    function renderInfoRows(data) {
-        const rows = [
-            ['地址', data.address],
-            ['電話', data.phone || '—'],
-            ['營業時間', data.businessHours || '—'],
-            ['類別', data.categories.map(c => `<span class="tag">${c}</span>`).join('')],
-            ['新增者', `${data.memberName}（ID: ${data.memberID}）`],
-            ['建立時間', new Date(data.createdAt).toLocaleString('zh-TW')],
-        ];
-
-        document.getElementById('infoRows').innerHTML = rows.map(([k, v]) => `
-      <div class="info-row">
-        <span class="info-key">${k}</span>
-        <span class="info-val">${v}</span>
-      </div>
-    `).join('');
-    }
-
-    // 填入經緯度欄位
-    function fillCoords(lat, lng) {
-        document.getElementById('editLat').value = lat ?? '';
-        document.getElementById('editLng').value = lng ?? '';
-    }
-
-    // 讀取座標欄位值
-    function getCoords() {
-        return {
-            latitude: document.getElementById('editLat').value.trim() || null,
-            longitude: document.getElementById('editLng').value.trim() || null,
-        };
-    }
-
-    // 渲染評分統計
-    function renderRating(data) {
-        const full = Math.round(data.averageRating);
-        const empty = 5 - full;
-        document.getElementById('ratingDisplay').innerHTML = `
-      <div class="rating-big">${data.averageRating.toFixed(1)}</div>
-      <div class="stars">${'★'.repeat(full)}${'☆'.repeat(empty)}</div>
-      <div class="text-muted" style="margin-top:6px">共 ${data.reviewCount} 則評論</div>
-    `;
-    }
-
-    // 綁定儲存座標按鈕
-    function bindSaveCoord(onSave) {
-        document.getElementById('saveCoordBtn')
-            .addEventListener('click', onSave);
-    }
-
-    // 綁定軟刪除按鈕（事件委派）
-    function bindSoftDelete(onDelete) {
-        document.getElementById('detailActions')
-            .addEventListener('click', (e) => {
-                if (e.target.dataset.action === 'soft-delete') onDelete();
-            });
-    }
-
-    return {
-        renderNotFound, renderActions, renderInfoRows,
-        fillCoords, getCoords, renderRating, bindSaveCoord, bindSoftDelete
-    };
+    return { render };
 })();
