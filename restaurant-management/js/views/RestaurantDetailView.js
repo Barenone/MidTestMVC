@@ -13,6 +13,7 @@ const RestaurantDetailView = (() => {
                 </div>
                 <div class="page-actions">
                     ${deleted ? `
+                        <button class="btn" data-action="edit-deleted" data-id="${restaurant.id}">□ 編輯</button>
                         <button class="btn btn-restore" data-action="restore" data-id="${restaurant.id}">□ 解除停用</button>
                         <button class="btn btn-danger" data-action="hard-delete" data-id="${restaurant.id}">□ 永久刪除</button>
                     ` : `
@@ -22,7 +23,7 @@ const RestaurantDetailView = (() => {
                 </div>
             </div>
 
-            ${deleted ? `<div class="alert">此資料目前 IsDeleted = 1。解除停用後會回到餐廳一覽；永久刪除會從原型資料中移除。</div>` : ""}
+            ${deleted ? `<div class="alert">此資料目前 IsDeleted = 1。可先編輯修正資料，再解除停用回到餐廳一覽。</div>` : ""}
 
             <div class="detail-grid">
                 <div>
@@ -82,18 +83,85 @@ const RestaurantDetailView = (() => {
     function imageSection(restaurant) {
         const cover = restaurant.images?.cover;
         const environments = restaurant.images?.environments || [];
+        const visibleEnvironments = environments.slice(0, 6);
+        const hiddenCount = Math.max(environments.length - 6, 0);
+
         return `
             <section class="card">
                 <h3>餐廳圖片</h3>
                 <div class="detail-image-grid">
                     <div class="detail-cover">
-                        ${cover ? `<img src="${cover.dataUrl}" alt="${cover.name}">` : `<div class="image-empty">尚未上傳封面圖</div>`}
+                        ${cover ? imageButton(cover, {
+                            action: "view-image",
+                            restaurantId: restaurant.id,
+                            type: "cover",
+                            index: 0,
+                            className: "detail-image-button cover"
+                        }) : `<div class="image-empty">尚未上傳封面圖</div>`}
                     </div>
                     <div class="detail-env-list">
-                        ${environments.length ? environments.map(image => `<img src="${image.dataUrl}" alt="${image.name}">`).join("") : `<div class="image-empty">尚未上傳環境圖</div>`}
+                        ${visibleEnvironments.length ? visibleEnvironments.map((image, index) => {
+                            const isOverflowTile = index === 5 && hiddenCount > 0;
+                            return imageButton(image, {
+                                action: isOverflowTile ? "view-environment-gallery" : "view-image",
+                                restaurantId: restaurant.id,
+                                type: "environment",
+                                index,
+                                className: `detail-image-button environment ${isOverflowTile ? "has-more" : ""}`,
+                                overlay: isOverflowTile ? `+${hiddenCount}` : ""
+                            });
+                        }).join("") : `<div class="image-empty">尚未上傳環境圖</div>`}
                     </div>
                 </div>
             </section>
+        `;
+    }
+
+    function imageButton(image, { action, restaurantId, type, index, className, overlay = "" }) {
+        return `
+            <button class="${className}" data-action="${action}" data-id="${restaurantId}" data-image-type="${type}" data-image-index="${index}" title="檢視 ${image.name}">
+                <img src="${image.dataUrl}" alt="${image.name}">
+                ${overlay ? `<span class="image-more-overlay">${overlay}</span>` : ""}
+            </button>
+        `;
+    }
+
+    function renderSingleImageModal(image) {
+        return `
+            <div class="modal lightbox-modal" role="dialog" aria-modal="true" aria-label="圖片檢視">
+                <div class="modal-head">
+                    <div>
+                        <h2>${image.name}</h2>
+                        <p class="muted">${image.width} × ${image.height}px · ${image.format}</p>
+                    </div>
+                    <button class="btn btn-icon" data-action="close-modal" aria-label="關閉">×</button>
+                </div>
+                <div class="lightbox-body">
+                    <img class="lightbox-image" src="${image.dataUrl}" alt="${image.name}">
+                </div>
+            </div>
+        `;
+    }
+
+    function renderGalleryModal(images) {
+        return `
+            <div class="modal gallery-modal" role="dialog" aria-modal="true" aria-label="環境圖一覽">
+                <div class="modal-head">
+                    <div>
+                        <h2>環境圖一覽</h2>
+                        <p class="muted">共 ${images.length} 張</p>
+                    </div>
+                    <button class="btn btn-icon" data-action="close-modal" aria-label="關閉">×</button>
+                </div>
+                <div class="gallery-body">
+                    ${images.map(image => `
+                        <figure class="gallery-item">
+                            <img src="${image.dataUrl}" alt="${image.name}">
+                            <figcaption>${image.name}</figcaption>
+                        </figure>
+                    `).join("")}
+                </div>
+            </div>
         `;
     }
 
@@ -106,5 +174,5 @@ const RestaurantDetailView = (() => {
         `;
     }
 
-    return { render };
+    return { render, renderSingleImageModal, renderGalleryModal };
 })();

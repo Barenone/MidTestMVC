@@ -8,6 +8,7 @@ const RestaurantApp = (() => {
         bindNavigation();
         bindAppEvents();
         RestaurantFormController.bindGlobalEvents();
+        RestaurantDetailController.bindGlobalEvents();
         showList();
     }
 
@@ -45,16 +46,18 @@ const RestaurantApp = (() => {
             if (["searchInput", "cityFilter", "districtFilter", "tagFilter", "sortSelect"].includes(event.target.id)) renderFilteredList();
             if (["deletedSearchInput", "deletedCityFilter", "deletedReasonFilter"].includes(event.target.id)) renderFilteredDeleted();
         });
+
         app().addEventListener("change", event => {
             if (["searchInput", "cityFilter", "districtFilter", "tagFilter", "sortSelect"].includes(event.target.id)) renderFilteredList();
             if (["deletedSearchInput", "deletedCityFilter", "deletedReasonFilter"].includes(event.target.id)) renderFilteredDeleted();
         });
+
         app().addEventListener("click", event => {
             const actionTarget = event.target.closest("[data-action]");
             const row = event.target.closest("tr[data-id]");
             if (actionTarget) {
                 event.stopPropagation();
-                handleAction(actionTarget.dataset.action, actionTarget.dataset.id);
+                handleAction(actionTarget.dataset.action, actionTarget.dataset.id, actionTarget);
                 return;
             }
             if (row && document.getElementById("restaurantRows")) RestaurantDetailController.show(row.dataset.id);
@@ -62,9 +65,19 @@ const RestaurantApp = (() => {
         });
     }
 
-    function handleAction(action, id) {
-        if (["back-list", "back-deleted", "edit", "soft-delete", "restore", "hard-delete"].includes(action)) {
-            RestaurantDetailController.handleAction(action, id);
+    function handleAction(action, id, target = null) {
+        if ([
+            "back-list",
+            "back-deleted",
+            "edit",
+            "edit-deleted",
+            "soft-delete",
+            "restore",
+            "hard-delete",
+            "view-image",
+            "view-environment-gallery"
+        ].includes(action)) {
+            RestaurantDetailController.handleAction(action, id, target);
         }
         if (action === "detail") RestaurantDetailController.show(id);
         if (action === "deleted-detail") RestaurantDetailController.show(id, { deleted: true });
