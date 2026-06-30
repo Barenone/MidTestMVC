@@ -36,6 +36,7 @@ const RestaurantDetailView = (() => {
                         ${infoRow("行政區", restaurant.district)}
                         ${infoRow("詳細地址", restaurant.address)}
                         ${infoRow("電話", restaurant.phone)}
+                        ${infoRow("備註", restaurant.notes || "尚未填寫")}
                         ${infoRow("標籤", restaurant.tags.map(name => RestaurantListView.tag(name)).join(" "))}
                         ${infoRow("擁有者", `${restaurant.owner}（MemberID: ${restaurant.memberId}）`)}
                     </section>

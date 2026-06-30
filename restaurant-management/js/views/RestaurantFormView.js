@@ -19,10 +19,11 @@ const RestaurantFormView = (() => {
                                 ${field("餐廳名稱", "name", data.name, true)}
                                 ${field("電話", "phone", data.phone)}
                                 ${selectField("縣市", "city", data.city, ["台北市"], true)}
-                                ${selectField("行政區", "district", data.district, ["大安區", "信義區", "士林區", "中山區", "中正區"], true)}
+                                ${selectField("行政區", "district", data.district, ["大安區", "信義區", "士林區", "中山區", "中正區", "南港區", "松山區", "萬華區", "北投區", "文山區"], true)}
                             </div>
                             ${field("詳細地址", "address", data.address, true)}
-                            <p class="hint">後續可串接地圖 API，由地址自動轉換 Latitude / Longitude。</p>
+                            ${textareaField("備註", "notes", data.notes, "例如：幾月幾號臨時不定期公休、禁止寵物入內等。")}
+                            <p class="hint">備註對應 Restaurants.Notes，最多建議 1000 字。</p>
                         </section>
 
                         <section class="form-section">
@@ -80,6 +81,7 @@ const RestaurantFormView = (() => {
             city: "台北市",
             district: "",
             address: "",
+            notes: "",
             tags: [],
             hours: JSON.parse(JSON.stringify(RestaurantModel.defaultHours)),
             images: { cover: null, environments: [] }
@@ -91,6 +93,15 @@ const RestaurantFormView = (() => {
             <label class="field">
                 <span>${label}${required ? ` <b class="required">*</b>` : ""}</span>
                 <input class="input" name="${name}" value="${escapeAttr(value ?? "")}" ${required ? "required" : ""}>
+            </label>
+        `;
+    }
+
+    function textareaField(label, name, value = "", placeholder = "") {
+        return `
+            <label class="field">
+                <span>${label}</span>
+                <textarea class="textarea" name="${name}" maxlength="1000" placeholder="${escapeAttr(placeholder)}">${escapeText(value ?? "")}</textarea>
             </label>
         `;
     }
@@ -179,6 +190,10 @@ const RestaurantFormView = (() => {
 
     function escapeAttr(value) {
         return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+    }
+
+    function escapeText(value) {
+        return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;");
     }
 
     return { renderModal, emptyRestaurant, hourRow, renderImagePreviews };

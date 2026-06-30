@@ -241,6 +241,7 @@ const RestaurantFormController = (() => {
             city: formData.get("city"),
             district: formData.get("district"),
             address: formData.get("address").trim(),
+            notes: formData.get("notes").trim(),
             tags: selectedTags,
             hours: hoursDraft,
             images: imageDraft

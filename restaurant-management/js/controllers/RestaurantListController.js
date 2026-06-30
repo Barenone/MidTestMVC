@@ -1,4 +1,7 @@
 const RestaurantApp = (() => {
+    const pageSize = 10;
+    let currentPage = 1;
+
     const app = () => document.getElementById("app");
     const title = () => document.getElementById("pageTitle");
     const actions = () => document.getElementById("pageActions");
@@ -43,12 +46,18 @@ const RestaurantApp = (() => {
 
     function bindAppEvents() {
         app().addEventListener("input", event => {
-            if (["searchInput", "cityFilter", "districtFilter", "tagFilter", "sortSelect"].includes(event.target.id)) renderFilteredList();
+            if (["searchInput", "cityFilter", "districtFilter", "tagFilter", "sortSelect"].includes(event.target.id)) {
+                currentPage = 1;
+                renderFilteredList();
+            }
             if (["deletedSearchInput", "deletedCityFilter", "deletedReasonFilter"].includes(event.target.id)) renderFilteredDeleted();
         });
 
         app().addEventListener("change", event => {
-            if (["searchInput", "cityFilter", "districtFilter", "tagFilter", "sortSelect"].includes(event.target.id)) renderFilteredList();
+            if (["searchInput", "cityFilter", "districtFilter", "tagFilter", "sortSelect"].includes(event.target.id)) {
+                currentPage = 1;
+                renderFilteredList();
+            }
             if (["deletedSearchInput", "deletedCityFilter", "deletedReasonFilter"].includes(event.target.id)) renderFilteredDeleted();
         });
 
@@ -85,9 +94,22 @@ const RestaurantApp = (() => {
             RestaurantModel.toggleTag(id);
             showTags();
         }
+        if (action === "page-prev") {
+            currentPage -= 1;
+            renderFilteredList();
+        }
+        if (action === "page-next") {
+            currentPage += 1;
+            renderFilteredList();
+        }
+        if (action === "page-go") {
+            currentPage = Number(target.dataset.page);
+            renderFilteredList();
+        }
     }
 
     function showList() {
+        currentPage = 1;
         setActive("list");
         setTitle("餐廳一覽");
         setActions(`
@@ -98,14 +120,23 @@ const RestaurantApp = (() => {
             RestaurantFormController.open({ onSave: showList });
         });
         actions().querySelector("#exportBtn").addEventListener("click", () => toast("原型已模擬匯出動作。"));
-        const restaurants = filterRestaurants(false);
-        mount(RestaurantListView.renderList({ stats: RestaurantModel.stats(), restaurants, tags: RestaurantModel.tags() }));
+
+        const result = pagedRestaurants(false);
+        mount(RestaurantListView.renderList({
+            stats: RestaurantModel.stats(),
+            restaurants: result.items,
+            tags: RestaurantModel.tags(),
+            pagination: result.pagination
+        }));
     }
 
     function renderFilteredList() {
         const body = document.getElementById("restaurantRows");
-        if (!body) return;
-        body.innerHTML = RestaurantListView.restaurantRows(filterRestaurants(false));
+        const pager = document.getElementById("restaurantPager");
+        if (!body || !pager) return;
+        const result = pagedRestaurants(false);
+        body.innerHTML = RestaurantListView.restaurantRows(result.items);
+        pager.innerHTML = RestaurantListView.pager(result.pagination);
     }
 
     function showDeleted() {
@@ -140,6 +171,22 @@ const RestaurantApp = (() => {
         showTags();
     }
 
+    function pagedRestaurants(deleted) {
+        const list = filterRestaurants(deleted);
+        const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+        currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+        const start = (currentPage - 1) * pageSize;
+        return {
+            items: list.slice(start, start + pageSize),
+            pagination: {
+                totalItems: list.length,
+                currentPage,
+                totalPages,
+                pageSize
+            }
+        };
+    }
+
     function filterRestaurants(deleted) {
         let list = RestaurantModel.restaurants().filter(item => item.isDeleted === deleted);
 
@@ -151,7 +198,7 @@ const RestaurantApp = (() => {
         const sort = document.getElementById("sortSelect")?.value || "newest";
 
         if (keyword) {
-            list = list.filter(item => `${item.name} ${item.address}`.toLowerCase().includes(keyword));
+            list = list.filter(item => `${item.name} ${item.address} ${item.notes}`.toLowerCase().includes(keyword));
         }
         if (city) list = list.filter(item => item.city === city);
         if (!deleted && district) list = list.filter(item => item.district === district);

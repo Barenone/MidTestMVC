@@ -22,7 +22,7 @@ const RestaurantListView = (() => {
         `;
     }
 
-    function renderList({ stats, restaurants, tags }) {
+    function renderList({ stats, restaurants, tags, pagination }) {
         const activeTags = tags.filter(item => !item.isDeleted);
         return `
             ${statsCards(stats)}
@@ -40,6 +40,11 @@ const RestaurantListView = (() => {
                         <option>士林區</option>
                         <option>中山區</option>
                         <option>中正區</option>
+                        <option>南港區</option>
+                        <option>松山區</option>
+                        <option>萬華區</option>
+                        <option>北投區</option>
+                        <option>文山區</option>
                     </select>
                     <select id="tagFilter" class="select">
                         <option value="">全部標籤</option>
@@ -68,7 +73,7 @@ const RestaurantListView = (() => {
                     <tbody id="restaurantRows">${restaurantRows(restaurants)}</tbody>
                 </table>
             </div>
-            <div class="pager"><span>共 ${restaurants.length} 筆</span><button class="btn">□</button><button class="btn">1</button><button class="btn">2</button><button class="btn">3</button><button class="btn">□</button></div>
+            <div id="restaurantPager">${pager(pagination)}</div>
         `;
     }
 
@@ -92,9 +97,23 @@ const RestaurantListView = (() => {
         `).join("");
     }
 
+    function pager({ totalItems, currentPage, totalPages, pageSize }) {
+        const start = totalItems ? (currentPage - 1) * pageSize + 1 : 0;
+        const end = Math.min(currentPage * pageSize, totalItems);
+        const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+        return `
+            <div class="pager">
+                <span>共 ${totalItems} 筆，顯示 ${start}-${end}</span>
+                <button class="btn" data-action="page-prev" ${currentPage <= 1 ? "disabled" : ""}>上一頁</button>
+                ${pages.map(page => `<button class="btn ${page === currentPage ? "pg on" : ""}" data-action="page-go" data-page="${page}">${page}</button>`).join("")}
+                <button class="btn" data-action="page-next" ${currentPage >= totalPages ? "disabled" : ""}>下一頁</button>
+            </div>
+        `;
+    }
+
     function renderDeleted({ restaurants }) {
         return `
-            <div class="alert">以下餐廳已停用（IsDeleted = 1），一般用戶不可見。點擊進入詳細頁面可解除停用或永久刪除。</div>
+            <div class="alert">以下餐廳已停用（IsDeleted = 1），一般用戶不可見。點擊進入詳細頁面可編輯、解除停用或永久刪除。</div>
             <div class="stats-grid">
                 <article class="stat-card"><span>停用總數</span><strong>${restaurants.length}</strong><small>可還原</small></article>
                 <article class="stat-card"><span>最近停用</span><strong>${restaurants[0]?.deletedAt || "-"}</strong><small>${restaurants[0]?.name || "-"}</small></article>
@@ -177,6 +196,7 @@ const RestaurantListView = (() => {
     return {
         renderList,
         restaurantRows,
+        pager,
         renderDeleted,
         deletedRows,
         renderTags,
