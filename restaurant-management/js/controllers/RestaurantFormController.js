@@ -1,5 +1,27 @@
 const RestaurantFormController = (() => {
+    const imageRules = {
+        cover: {
+            label: "餐廳封面圖",
+            allowedTypes: ["image/jpeg"],
+            maxBytes: 5 * 1024 * 1024,
+            minWidth: 1200,
+            width: 1200,
+            height: 675,
+            quality: 0.78
+        },
+        environment: {
+            label: "餐廳環境圖",
+            allowedTypes: ["image/jpeg"],
+            maxBytes: 5 * 1024 * 1024,
+            minWidth: 1200,
+            width: 1200,
+            height: 800,
+            quality: 0.8
+        }
+    };
+
     let hoursDraft = [];
+    let imageDraft = { cover: null, environments: [] };
     let onSaveCallback = null;
 
     function open({ restaurant = null, onSave }) {
@@ -7,9 +29,14 @@ const RestaurantFormController = (() => {
         const root = document.getElementById("modalRoot");
         const data = restaurant ? JSON.parse(JSON.stringify(restaurant)) : RestaurantFormView.emptyRestaurant();
         hoursDraft = JSON.parse(JSON.stringify(data.hours));
+        imageDraft = {
+            cover: data.images?.cover || null,
+            environments: Array.isArray(data.images?.environments) ? data.images.environments : []
+        };
         root.innerHTML = RestaurantFormView.renderModal({ restaurant: data, tags: RestaurantModel.tags() });
         root.classList.add("open");
         root.setAttribute("aria-hidden", "false");
+        RestaurantFormView.renderImagePreviews(imageDraft);
     }
 
     function close() {
@@ -30,6 +57,7 @@ const RestaurantFormController = (() => {
             if (action === "toggle-day") toggleDay(event.target);
             if (action === "add-slot") addSlot(event.target);
             if (action === "remove-slot") removeSlot(event.target);
+            if (action === "remove-image") removeImage(event.target.closest("[data-action]"));
         });
 
         root.addEventListener("click", event => {
@@ -43,6 +71,11 @@ const RestaurantFormController = (() => {
             const row = slotInput.closest("[data-day-index]");
             const slot = slotInput.closest("[data-slot-index]");
             hoursDraft[Number(row.dataset.dayIndex)].slots[Number(slot.dataset.slotIndex)][slotInput.dataset.field] = slotInput.value;
+        });
+
+        root.addEventListener("change", event => {
+            const input = event.target.closest("[data-image-input]");
+            if (input) handleImageFiles(input);
         });
 
         root.addEventListener("submit", event => {
@@ -92,6 +125,104 @@ const RestaurantFormController = (() => {
         container.innerHTML = hoursDraft.map((day, index) => RestaurantFormView.hourRow(day, index)).join("");
     }
 
+    async function handleImageFiles(input) {
+        const type = input.dataset.imageInput;
+        const files = [...input.files];
+        if (!files.length) return;
+
+        for (const file of files) {
+            try {
+                const processed = await processImage(file, imageRules[type]);
+                if (type === "cover") {
+                    imageDraft.cover = processed;
+                } else {
+                    imageDraft.environments.push(processed);
+                }
+                RestaurantApp.toast(`${imageRules[type].label}已轉成 WebP。`);
+            } catch (error) {
+                RestaurantApp.toast(error.message);
+            }
+        }
+
+        input.value = "";
+        RestaurantFormView.renderImagePreviews(imageDraft);
+    }
+
+    async function processImage(file, rule) {
+        if (!rule.allowedTypes.includes(file.type)) {
+            throw new Error(`${rule.label}只接受 JPG 格式。`);
+        }
+        if (file.size > rule.maxBytes) {
+            throw new Error(`${rule.label}檔案不可超過 5MB。`);
+        }
+
+        const bitmap = await loadImageBitmap(file);
+        if (bitmap.width < rule.minWidth) {
+            throw new Error(`${rule.label}寬度至少需要 ${rule.minWidth}px，目前為 ${bitmap.width}px。`);
+        }
+
+        const dataUrl = cropToWebP(bitmap, rule);
+        return {
+            id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+            name: file.name.replace(/\.[^.]+$/, ".webp"),
+            sourceName: file.name,
+            dataUrl,
+            format: "WebP",
+            width: rule.width,
+            height: rule.height,
+            bytes: estimateDataUrlBytes(dataUrl),
+            createdAt: new Date().toISOString()
+        };
+    }
+
+    function loadImageBitmap(file) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error("圖片讀取失敗，請重新選擇檔案。"));
+            image.src = URL.createObjectURL(file);
+        });
+    }
+
+    function cropToWebP(image, rule) {
+        const canvas = document.createElement("canvas");
+        canvas.width = rule.width;
+        canvas.height = rule.height;
+        const context = canvas.getContext("2d");
+
+        const targetRatio = rule.width / rule.height;
+        const sourceRatio = image.width / image.height;
+        let sx = 0;
+        let sy = 0;
+        let sw = image.width;
+        let sh = image.height;
+
+        if (sourceRatio > targetRatio) {
+            sw = image.height * targetRatio;
+            sx = (image.width - sw) / 2;
+        } else {
+            sh = image.width / targetRatio;
+            sy = (image.height - sh) / 2;
+        }
+
+        context.drawImage(image, sx, sy, sw, sh, 0, 0, rule.width, rule.height);
+        URL.revokeObjectURL(image.src);
+        return canvas.toDataURL("image/webp", rule.quality);
+    }
+
+    function estimateDataUrlBytes(dataUrl) {
+        const base64 = dataUrl.split(",")[1] || "";
+        return Math.round(base64.length * 0.75);
+    }
+
+    function removeImage(button) {
+        const type = button.dataset.imageType;
+        const index = Number(button.dataset.imageIndex);
+        if (type === "cover") imageDraft.cover = null;
+        if (type === "environment") imageDraft.environments.splice(index, 1);
+        RestaurantFormView.renderImagePreviews(imageDraft);
+    }
+
     function save(form) {
         const formData = new FormData(form);
         const selectedTags = [...document.querySelectorAll("#tagChoices .choice.active")].map(item => item.dataset.tag);
@@ -111,7 +242,8 @@ const RestaurantFormController = (() => {
             district: formData.get("district"),
             address: formData.get("address").trim(),
             tags: selectedTags,
-            hours: hoursDraft
+            hours: hoursDraft,
+            images: imageDraft
         };
 
         const saved = RestaurantModel.saveRestaurant(record);

@@ -26,6 +26,8 @@ const RestaurantDetailView = (() => {
 
             <div class="detail-grid">
                 <div>
+                    ${imageSection(restaurant)}
+
                     <section class="card">
                         <h3>基本資訊</h3>
                         ${infoRow("餐廳名稱", restaurant.name)}
@@ -74,6 +76,24 @@ const RestaurantDetailView = (() => {
                     ` : ""}
                 </div>
             </div>
+        `;
+    }
+
+    function imageSection(restaurant) {
+        const cover = restaurant.images?.cover;
+        const environments = restaurant.images?.environments || [];
+        return `
+            <section class="card">
+                <h3>餐廳圖片</h3>
+                <div class="detail-image-grid">
+                    <div class="detail-cover">
+                        ${cover ? `<img src="${cover.dataUrl}" alt="${cover.name}">` : `<div class="image-empty">尚未上傳封面圖</div>`}
+                    </div>
+                    <div class="detail-env-list">
+                        ${environments.length ? environments.map(image => `<img src="${image.dataUrl}" alt="${image.name}">`).join("") : `<div class="image-empty">尚未上傳環境圖</div>`}
+                    </div>
+                </div>
+            </section>
         `;
     }
 

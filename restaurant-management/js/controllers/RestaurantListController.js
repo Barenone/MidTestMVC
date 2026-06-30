@@ -25,7 +25,9 @@ const RestaurantApp = (() => {
     }
 
     function setActive(route) {
-        document.querySelectorAll(".nav-item").forEach(item => item.classList.toggle("active", item.dataset.route === route));
+        document.querySelectorAll(".nav-item").forEach(item => {
+            item.classList.toggle("active", item.dataset.route === route);
+        });
     }
 
     function bindNavigation() {

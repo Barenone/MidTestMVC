@@ -22,7 +22,7 @@ const RestaurantFormView = (() => {
                                 ${selectField("行政區", "district", data.district, ["大安區", "信義區", "士林區", "中山區", "中正區"], true)}
                             </div>
                             ${field("詳細地址", "address", data.address, true)}
-                            <p class="hint">實作後可串接地圖 API，由地址自動轉換 Latitude / Longitude。</p>
+                            <p class="hint">後續可串接地圖 API，由地址自動轉換 Latitude / Longitude。</p>
                         </section>
 
                         <section class="form-section">
@@ -43,14 +43,25 @@ const RestaurantFormView = (() => {
                         </section>
 
                         <section class="form-section">
-                            <h3>圖片</h3>
-                            <p class="hint">封面可對應 RestaurantCover，環境照可對應 RestaurantEnvironment。</p>
-                            <div class="image-placeholders">
-                                <div class="image-box">封面</div>
-                                <div class="image-box">新增</div>
-                                <div class="image-box">環境照</div>
-                                <div class="image-box">新增</div>
+                            <h3>餐廳圖片</h3>
+                            <div class="image-manager">
+                                ${imageUploader({
+                                    key: "cover",
+                                    title: "餐廳封面圖",
+                                    spec: "JPG，寬度至少 1200px，5MB 以內，裁切 1200 × 675，輸出 WebP 品質 78",
+                                    accept: "image/jpeg",
+                                    multiple: false
+                                })}
+                                ${imageUploader({
+                                    key: "environment",
+                                    title: "餐廳環境圖",
+                                    spec: "JPG，寬度至少 1200px，5MB 以內，裁切 1200 × 800，輸出 WebP 品質 80，可多張管理",
+                                    accept: "image/jpeg",
+                                    multiple: true
+                                })}
                             </div>
+                            <div id="coverPreview" class="image-preview-list"></div>
+                            <div id="environmentPreview" class="image-preview-list"></div>
                         </section>
                     </div>
                     <div class="modal-foot">
@@ -70,7 +81,8 @@ const RestaurantFormView = (() => {
             district: "",
             address: "",
             tags: [],
-            hours: JSON.parse(JSON.stringify(RestaurantModel.defaultHours))
+            hours: JSON.parse(JSON.stringify(RestaurantModel.defaultHours)),
+            images: { cover: null, environments: [] }
         };
     }
 
@@ -78,7 +90,7 @@ const RestaurantFormView = (() => {
         return `
             <label class="field">
                 <span>${label}${required ? ` <b class="required">*</b>` : ""}</span>
-                <input class="input" name="${name}" value="${value ?? ""}" ${required ? "required" : ""}>
+                <input class="input" name="${name}" value="${escapeAttr(value ?? "")}" ${required ? "required" : ""}>
             </label>
         `;
     }
@@ -119,5 +131,55 @@ const RestaurantFormView = (() => {
         `;
     }
 
-    return { renderModal, emptyRestaurant, hourRow };
+    function imageUploader({ key, title, spec, accept, multiple }) {
+        return `
+            <article class="image-uploader">
+                <div>
+                    <strong>${title}</strong>
+                    <p>${spec}</p>
+                </div>
+                <label class="btn">
+                    □ 選擇圖片
+                    <input type="file" data-image-input="${key}" accept="${accept}" ${multiple ? "multiple" : ""} hidden>
+                </label>
+            </article>
+        `;
+    }
+
+    function renderImagePreviews(images) {
+        const cover = document.getElementById("coverPreview");
+        const environment = document.getElementById("environmentPreview");
+        if (cover) {
+            cover.innerHTML = images.cover ? imageCard(images.cover, "cover") : emptyImageMessage("尚未上傳餐廳封面圖");
+        }
+        if (environment) {
+            environment.innerHTML = images.environments.length
+                ? images.environments.map((image, index) => imageCard(image, "environment", index)).join("")
+                : emptyImageMessage("尚未上傳餐廳環境圖");
+        }
+    }
+
+    function imageCard(image, type, index = 0) {
+        const size = image.bytes ? `${(image.bytes / 1024).toFixed(0)} KB` : "已壓縮";
+        return `
+            <article class="image-preview-card">
+                <img src="${image.dataUrl}" alt="${image.name}">
+                <div>
+                    <strong>${image.name}</strong>
+                    <p>${image.width} × ${image.height}px · ${image.format} · ${size}</p>
+                    <button type="button" class="btn btn-danger" data-action="remove-image" data-image-type="${type}" data-image-index="${index}">移除</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function emptyImageMessage(text) {
+        return `<div class="image-empty">${text}</div>`;
+    }
+
+    function escapeAttr(value) {
+        return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+    }
+
+    return { renderModal, emptyRestaurant, hourRow, renderImagePreviews };
 })();

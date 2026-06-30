@@ -1,6 +1,6 @@
 const RestaurantModel = (() => {
-    const RESTAURANT_KEY = "restaurant_admin_restaurants_v2";
-    const TAG_KEY = "restaurant_admin_tags_v2";
+    const RESTAURANT_KEY = "restaurant_admin_restaurants_v3";
+    const TAG_KEY = "restaurant_admin_tags_v3";
 
     const defaultHours = [
         { day: "一", open: true, slots: [{ start: "11:00", end: "14:00" }, { start: "17:00", end: "21:00" }] },
@@ -12,153 +12,36 @@ const RestaurantModel = (() => {
         { day: "日", open: false, slots: [] }
     ];
 
+    const imageDefaults = {
+        cover: null,
+        environments: []
+    };
+
     const seedRestaurants = [
+        restaurantSeed(1, "築地拉麵", "大安區", "台北市大安區和平東路 216 號", "02-2731-1234", ["日式料理"], "alice", 2, 4.8, 62, "2025-03-15"),
+        restaurantSeed(2, "阿嬤的灶腳", "信義區", "台北市信義區松仁路 100 號", "02-2345-5678", ["台式料理"], "bob", 3, 4.3, 38, "2025-04-01"),
+        restaurantSeed(3, "天母涮涮鍋", "士林區", "台北市士林區天母東路 200 號", "02-2871-9999", ["火鍋"], "carol", 4, 4.1, 51, "2025-04-20"),
+        restaurantSeed(4, "慢烤咖啡", "中山區", "台北市中山區南京東路 88 號", "02-2511-3322", ["咖啡廳", "早午餐"], "dora", 5, 4.7, 27, "2025-05-06"),
         {
-            id: 1,
-            name: "築地拉麵",
-            city: "台北市",
-            district: "大安區",
-            address: "台北市大安區和平東路 216 號",
-            phone: "02-2731-1234",
-            tags: ["日式料理"],
-            owner: "alice",
-            memberId: 2,
-            rating: 4.8,
-            reviewCount: 62,
-            latitude: 25.0412,
-            longitude: 121.5468,
-            createdAt: "2025-03-15",
-            isDeleted: false,
-            deletedAt: null,
-            deletedBy: null,
-            deleteReason: "",
-            hours: clone(defaultHours)
-        },
-        {
-            id: 2,
-            name: "阿嬤的灶腳",
-            city: "台北市",
-            district: "信義區",
-            address: "台北市信義區松仁路 100 號",
-            phone: "02-2345-5678",
-            tags: ["台式料理"],
-            owner: "bob",
-            memberId: 3,
-            rating: 4.3,
-            reviewCount: 38,
-            latitude: 25.033,
-            longitude: 121.568,
-            createdAt: "2025-04-01",
-            isDeleted: false,
-            deletedAt: null,
-            deletedBy: null,
-            deleteReason: "",
-            hours: clone(defaultHours)
-        },
-        {
-            id: 3,
-            name: "天母涮涮鍋",
-            city: "台北市",
-            district: "士林區",
-            address: "台北市士林區天母東路 200 號",
-            phone: "02-2871-9999",
-            tags: ["火鍋"],
-            owner: "carol",
-            memberId: 4,
-            rating: 4.1,
-            reviewCount: 51,
-            latitude: 25.117,
-            longitude: 121.532,
-            createdAt: "2025-04-20",
-            isDeleted: false,
-            deletedAt: null,
-            deletedBy: null,
-            deleteReason: "",
-            hours: clone(defaultHours)
-        },
-        {
-            id: 4,
-            name: "慢烤咖啡",
-            city: "台北市",
-            district: "中山區",
-            address: "台北市中山區南京東路 88 號",
-            phone: "02-2511-3322",
-            tags: ["咖啡廳", "早午餐"],
-            owner: "dora",
-            memberId: 5,
-            rating: 4.7,
-            reviewCount: 27,
-            latitude: 25.052,
-            longitude: 121.525,
-            createdAt: "2025-05-06",
-            isDeleted: false,
-            deletedAt: null,
-            deletedBy: null,
-            deleteReason: "",
-            hours: clone(defaultHours)
-        },
-        {
-            id: 5,
-            name: "老王牛肉麵",
-            city: "台北市",
-            district: "中正區",
-            address: "台北市中正區汀州路 80 號",
-            phone: "02-2391-0000",
-            tags: ["台式料理"],
-            owner: "alice",
-            memberId: 2,
-            rating: 3.5,
-            reviewCount: 12,
-            latitude: null,
-            longitude: null,
-            createdAt: "2025-02-10",
+            ...restaurantSeed(5, "老王牛肉麵", "中正區", "台北市中正區汀州路 80 號", "02-2391-0000", ["台式料理"], "alice", 2, 3.5, 12, "2025-02-10"),
             isDeleted: true,
             deletedAt: "2025-05-20",
             deletedBy: "admin",
-            deleteReason: "已歇業",
-            hours: clone(defaultHours)
+            deleteReason: "已歇業"
         },
         {
-            id: 6,
-            name: "松江壽司店",
-            city: "台北市",
-            district: "中山區",
-            address: "台北市中山區松江路 18 號",
-            phone: "02-2500-1324",
-            tags: ["日式料理"],
-            owner: "eric",
-            memberId: 8,
-            rating: 3.9,
-            reviewCount: 18,
-            latitude: null,
-            longitude: null,
-            createdAt: "2025-01-12",
+            ...restaurantSeed(6, "松江壽司店", "中山區", "台北市中山區松江路 18 號", "02-2500-1324", ["日式料理"], "eric", 8, 3.9, 18, "2025-01-12"),
             isDeleted: true,
             deletedAt: "2025-06-01",
             deletedBy: "admin",
-            deleteReason: "資訊不實",
-            hours: clone(defaultHours)
+            deleteReason: "資訊不實"
         },
         {
-            id: 7,
-            name: "東區義式廚房",
-            city: "台北市",
-            district: "大安區",
-            address: "台北市大安區忠孝東路 72 號",
-            phone: "02-2777-9911",
-            tags: ["義式料理"],
-            owner: "frank",
-            memberId: 9,
-            rating: 4.0,
-            reviewCount: 21,
-            latitude: null,
-            longitude: null,
-            createdAt: "2025-03-09",
+            ...restaurantSeed(7, "東區義式廚房", "大安區", "台北市大安區忠孝東路 72 號", "02-2777-9911", ["義式料理"], "frank", 9, 4.0, 21, "2025-03-09"),
             isDeleted: true,
             deletedAt: "2025-06-14",
             deletedBy: "admin",
-            deleteReason: "違規內容",
-            hours: clone(defaultHours)
+            deleteReason: "違規內容"
         }
     ];
 
@@ -177,8 +60,44 @@ const RestaurantModel = (() => {
         { id: 12, name: "泰式料理", isDeleted: true }
     ];
 
+    function restaurantSeed(id, name, district, address, phone, tags, owner, memberId, rating, reviewCount, createdAt) {
+        return {
+            id,
+            name,
+            city: "台北市",
+            district,
+            address,
+            phone,
+            tags,
+            owner,
+            memberId,
+            rating,
+            reviewCount,
+            latitude: null,
+            longitude: null,
+            createdAt,
+            isDeleted: false,
+            deletedAt: null,
+            deletedBy: null,
+            deleteReason: "",
+            hours: clone(defaultHours),
+            images: clone(imageDefaults)
+        };
+    }
+
     function clone(value) {
         return JSON.parse(JSON.stringify(value));
+    }
+
+    function normalizeRestaurant(record) {
+        return {
+            ...record,
+            images: {
+                cover: record.images?.cover || null,
+                environments: Array.isArray(record.images?.environments) ? record.images.environments : []
+            },
+            hours: Array.isArray(record.hours) ? record.hours : clone(defaultHours)
+        };
     }
 
     function init() {
@@ -200,7 +119,7 @@ const RestaurantModel = (() => {
     }
 
     function restaurants() {
-        return read(RESTAURANT_KEY);
+        return read(RESTAURANT_KEY).map(normalizeRestaurant);
     }
 
     function tags() {
@@ -215,13 +134,13 @@ const RestaurantModel = (() => {
         const list = restaurants();
         if (data.id) {
             const index = list.findIndex(item => item.id === Number(data.id));
-            list[index] = { ...list[index], ...data };
+            list[index] = normalizeRestaurant({ ...list[index], ...data });
             write(RESTAURANT_KEY, list);
             return list[index];
         }
 
         const nextId = list.length ? Math.max(...list.map(item => item.id)) + 1 : 1;
-        const record = {
+        const record = normalizeRestaurant({
             ...data,
             id: nextId,
             rating: 0,
@@ -233,7 +152,7 @@ const RestaurantModel = (() => {
             deletedAt: null,
             deletedBy: null,
             deleteReason: ""
-        };
+        });
         list.unshift(record);
         write(RESTAURANT_KEY, list);
         return record;
